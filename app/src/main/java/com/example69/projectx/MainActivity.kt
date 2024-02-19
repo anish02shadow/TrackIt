@@ -42,23 +42,89 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example69.projectx.data.*
-import com.example69.projectx.login.LoginViewModel
 import com.example69.projectx.ui.theme.AppViewModelProvider
 import com.example69.projectx.ui.theme.ProjectXTheme
 import com.example69.projectx.ui.theme.screens.*
+import android.Manifest
+import android.content.*
+import android.content.pm.PackageManager
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
+import androidx.lifecycle.LifecycleObserver
+import androidx.work.PeriodicWorkRequest
+import androidx.work.WorkManager
+import com.example69.projectx.workers.SMSWorker
+import java.util.concurrent.TimeUnit
 
-class MainActivity : ComponentActivity() {
+class MainActivity : ComponentActivity(), LifecycleObserver {
+
     @SuppressLint("UnusedMaterialScaffoldPaddingParameter")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        requestPermissions()
         setContent {
             ProjectXTheme {
+
                 val navController= rememberNavController()
 
                 Navigation(navController = navController)
         }
     }
+        scheduleSMSWorker()
+        handleIntent(intent)
 }
+
+    private fun requestPermissions() {
+        val context = this
+        val permissions = arrayOf(
+            Manifest.permission.READ_SMS,
+            Manifest.permission.POST_NOTIFICATIONS
+        )
+
+        val permissionsToRequest = mutableListOf<String>()
+        for (permission in permissions) {
+            if (ContextCompat.checkSelfPermission(context, permission)
+                != PackageManager.PERMISSION_GRANTED
+            ) {
+                permissionsToRequest.add(permission)
+            }
+        }
+
+        if (permissionsToRequest.isNotEmpty()) {
+            ActivityCompat.requestPermissions(this, permissionsToRequest.toTypedArray(), PERMISSIONS_REQUEST_CODE)
+        } else {
+            // All permissions are already granted
+        }
+    }
+
+    companion object {
+        private const val PERMISSIONS_REQUEST_CODE = 1001
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        handleIntent(intent)
+    }
+
+    private fun handleIntent(intent: Intent) {
+        // Handle the intent here
+    }
+
+    private fun scheduleSMSWorker() {
+        val workRequest = PeriodicWorkRequest.Builder(
+            SMSWorker::class.java,
+            PeriodicWorkRequest.MIN_PERIODIC_INTERVAL_MILLIS, // Repeat interval in minutes
+            TimeUnit.MILLISECONDS
+        ).build()
+
+        WorkManager.getInstance(applicationContext).enqueue(workRequest)
+    }
+
+
+
+}
+
+
     @SuppressLint("UnusedMaterialScaffoldPaddingParameter")
     @Composable
     fun Navigation(navController: NavHostController){
@@ -789,7 +855,7 @@ fun topnavigation(totalExpense: Double,totalIncome: Double,time:String): String 
                 .fillMaxWidth()
         ) {
             Image(
-                painter = painterResource(id = com.example69.projectx.R.drawable.niniiii),
+                painter = painterResource(id = com.example69.projectx.R.drawable.logo),
                 contentDescription = "Profile Photo",
                 modifier = Modifier
                     .clip(CircleShape)
@@ -810,7 +876,7 @@ fun topnavigation(totalExpense: Double,totalIncome: Double,time:String): String 
         }
     return select_time
     }
-}
+
 @Composable
 fun selecttime(items: List<String>, modifier: Modifier= Modifier,
                activeHighlightColor: Color = Color(0xFFFCEED4),

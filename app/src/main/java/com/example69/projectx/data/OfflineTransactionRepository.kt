@@ -19,5 +19,4 @@ class OfflineTransactionRepository(private val transactionDao: TransactionDao): 
 
     override suspend fun updateTransaction(transaction: Transaction)=transactionDao.update(transaction)
 
-
 }

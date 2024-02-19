@@ -85,6 +85,11 @@ dependencies {
     // coroutine
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.1.1'
 
+    //Jetpack Compose Permissions
+    implementation "com.google.accompanist:accompanist-permissions:0.24.11-rc"
+
+    //WorkManager
+    implementation "androidx.work:work-runtime:2.7.0"
 
 
 }
