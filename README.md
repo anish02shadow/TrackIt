@@ -22,6 +22,3 @@ Kotlin, Jetpack Compose, Room Database
 
 I welcome contributions from the community! If you'd like to contribute to TrackIt, please fork the repository and submit a pull request.
 
-## License
-
-TrackIt is released under the MIT License.
