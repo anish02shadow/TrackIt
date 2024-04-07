@@ -34,18 +34,21 @@ data class TransactionsScreenUiState(val transactionList: List<Transaction> = li
     val oneWeekInMillis = 24 * 60 * 60 * 1000*7 // Number of milliseconds in a week
 
 
+    val currentDate = LocalDate.now()
+    val startOfCurrentMonth = currentDate.withDayOfMonth(1)
+
+
     val startDate = now - oneDayInMillis
     val endDate = now
-    val startInstant = Instant.ofEpochMilli(startDate)
     val endInstant = Instant.ofEpochMilli(endDate)
-    val startLocalDate = startInstant.atZone(ZoneId.systemDefault()).toLocalDate()
+
     val endLocalDate = endInstant.atZone(ZoneId.systemDefault()).toLocalDate()
 
     val startDateWeek = now - oneWeekInMillis
     val startInstantWeek = Instant.ofEpochMilli(startDateWeek)
     val startLocalDateWeek = startInstantWeek.atZone(ZoneId.systemDefault()).toLocalDate()
 
-    val startLocalDateMonth = LocalDate.now().minusMonths(1)
+
 
     val startLocalDateYear = LocalDate.now().minusYears(1)
 
@@ -53,7 +56,7 @@ val transactionsScreenUiStateToday: StateFlow<TransactionsScreenUiStateToday> =
     //transactionRepository.getTransactionsInRangeStream(startDate = startDate,endDate=endDate).map { TransactionsScreenUiStateToday(it) }
     transactionRepository.getTransactionsStream()
         .map { TransactionsScreenUiStateToday(it.filter { transaction ->
-            transaction.date >= startLocalDate && transaction.date <= endLocalDate
+            transaction.date == currentDate
         }) }
         .stateIn(
             scope = viewModelScope,
@@ -77,7 +80,7 @@ val transactionsScreenUiStateToday: StateFlow<TransactionsScreenUiStateToday> =
     val transactionsScreenUiStateMonth: StateFlow<TransactionsScreenUiStateMonth> =
         transactionRepository.getTransactionsStream()
             .map { TransactionsScreenUiStateMonth(it.filter { transaction ->
-                transaction.date >= startLocalDateMonth && transaction.date <= endLocalDate
+                transaction.date >= startOfCurrentMonth && transaction.date <= startOfCurrentMonth.plusMonths(1)
             }) }
             .stateIn(
                 scope = viewModelScope,

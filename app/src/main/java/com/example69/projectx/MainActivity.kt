@@ -47,11 +47,17 @@ import com.example69.projectx.ui.theme.ProjectXTheme
 import com.example69.projectx.ui.theme.screens.*
 import android.Manifest
 import android.content.*
+import android.content.ContentValues.TAG
 import android.content.pm.PackageManager
+import android.util.Log
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleObserver
+import androidx.work.Constraints
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.NetworkType
 import androidx.work.PeriodicWorkRequest
+import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import com.example69.projectx.workers.SMSWorker
 import java.util.concurrent.TimeUnit
@@ -70,9 +76,12 @@ class MainActivity : ComponentActivity(), LifecycleObserver {
                 Navigation(navController = navController)
         }
     }
+
         scheduleSMSWorker()
         handleIntent(intent)
 }
+
+
 
     private fun requestPermissions() {
         val context = this
@@ -110,19 +119,44 @@ class MainActivity : ComponentActivity(), LifecycleObserver {
         // Handle the intent here
     }
 
+//    private fun scheduleSMSWorker() {
+//        val repeatInterval = 20L
+//        val workRequest = PeriodicWorkRequest.Builder(
+//            SMSWorker::class.java,
+//            repeatInterval, // Repeat interval in minutes
+//            TimeUnit.MINUTES
+//        ).build()
+//
+//        WorkManager.getInstance(applicationContext).enqueue(workRequest)
+//    }
+
     private fun scheduleSMSWorker() {
+        val workManager = WorkManager.getInstance(applicationContext)
+        val tagSMSWorker = "SMSWorkerTag"
+
         val workRequest = PeriodicWorkRequest.Builder(
             SMSWorker::class.java,
-            PeriodicWorkRequest.MIN_PERIODIC_INTERVAL_MILLIS, // Repeat interval in minutes
-            TimeUnit.MILLISECONDS
-        ).build()
+            20, // Repeat interval in minutes
+            TimeUnit.MINUTES
+        )
+            .addTag(tagSMSWorker)
+            .build()
 
-        WorkManager.getInstance(applicationContext).enqueue(workRequest)
+        try {
+            val workInfos = workManager.getWorkInfosByTag(tagSMSWorker).get()
+            if (workInfos.isEmpty()) {
+                workManager.enqueueUniquePeriodicWork(tagSMSWorker, ExistingPeriodicWorkPolicy.REPLACE, workRequest)
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error checking existing work: ${e.message}")
+        }
     }
 
 
 
+
 }
+
 
 
     @SuppressLint("UnusedMaterialScaffoldPaddingParameter")

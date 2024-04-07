@@ -20,8 +20,47 @@ import com.example69.projectx.R
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.util.concurrent.TimeUnit
 
 class SMSWorker(context: Context, workerParams: WorkerParameters) : Worker(context, workerParams) {
+
+//    override fun doWork(): Result {
+//        val sharedPreferences = applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+//        val lastProcessedTime = sharedPreferences.getLong(LAST_PROCESSED_TIME_KEY, 0L)
+//        val currentTime = System.currentTimeMillis()
+//
+//        if (currentTime - lastProcessedTime >= TimeUnit.MINUTES.toMillis(20)) {
+//            // Execute the worker's task
+//            Log.d(TAG, "Worker started")
+//            val lastProcessedMessageTime = getLastProcessedMessageTime()
+//            val dateFormat = SimpleDateFormat("MMM dd, yyyy hh:mm:ss a", Locale.getDefault()) // Define the date format
+//            val formattedTime = dateFormat.format(Date(lastProcessedMessageTime)) // Convert timestamp to human-readable format
+//            Log.d(TAG, "Last processed message time: $formattedTime")
+//            val cursor = queryMessagesFromTimestamp(lastProcessedMessageTime)
+//            if (cursor != null) {
+//                processMessages(cursor)
+//                cursor.close()
+//            }
+//            Log.d(TAG, "Worker finished")
+//            val lastProcessedMessageTime2 = getLastProcessedMessageTime()
+//            val formattedTime2 = dateFormat.format(Date(lastProcessedMessageTime2)) // Convert timestamp to human-readable format
+//            Log.d(TAG, "Last processed message time AFTER FINISH: $formattedTime2")
+//
+//            // Save the current time as the last processed time
+//            sharedPreferences.edit().putLong(LAST_PROCESSED_TIME_KEY, currentTime).apply()
+//        } else {
+//            Log.d(TAG, "Worker already executed within the last 20 minutes. Skipping.")
+//        }
+//
+//        // Sleep for 5 seconds after each worker execution
+//        try {
+//            Thread.sleep(TimeUnit.SECONDS.toMillis(5))
+//        } catch (e: InterruptedException) {
+//            Log.e(TAG, "Thread sleep interrupted: ${e.message}")
+//        }
+//
+//        return Result.success()
+//    }
 
     override fun doWork(): Result {
         Log.d(TAG, "Worker started")
@@ -41,12 +80,26 @@ class SMSWorker(context: Context, workerParams: WorkerParameters) : Worker(conte
         return Result.success()
     }
 
+//    private fun getLastProcessedMessageTime(): Long {
+//        val sharedPreferences = applicationContext.getSharedPreferences(
+//            LAST_PROCESSED_MESSAGE_PREFS,
+//            Context.MODE_PRIVATE
+//        )
+//        return sharedPreferences.getLong(LAST_PROCESSED_MESSAGE_TIME_KEY, System.currentTimeMillis() - PeriodicWorkRequest.MIN_PERIODIC_INTERVAL_MILLIS)
+//    }
+
     private fun getLastProcessedMessageTime(): Long {
         val sharedPreferences = applicationContext.getSharedPreferences(
             LAST_PROCESSED_MESSAGE_PREFS,
             Context.MODE_PRIVATE
         )
-        return sharedPreferences.getLong(LAST_PROCESSED_MESSAGE_TIME_KEY, System.currentTimeMillis() - PeriodicWorkRequest.MIN_PERIODIC_INTERVAL_MILLIS)
+        val prefValue = sharedPreferences.getLong(
+            LAST_PROCESSED_MESSAGE_TIME_KEY,
+            0L
+        )
+        val minIntervalMillis = TimeUnit.MINUTES.toMillis(20) // 20 minutes in milliseconds
+        val minTimestamp = System.currentTimeMillis() - minIntervalMillis
+        return maxOf(prefValue, minTimestamp)
     }
 
     private fun setLastProcessedMessageTime(timestamp: Long) {
@@ -167,5 +220,8 @@ class SMSWorker(context: Context, workerParams: WorkerParameters) : Worker(conte
         private const val LAST_PROCESSED_MESSAGE_PREFS = "last_processed_message_prefs"
         private const val LAST_PROCESSED_MESSAGE_TIME_KEY = "last_processed_message_time"
         private const val CHANNEL_ID = "incoming_sms_channel"
+        const val WORK_NAME = "SMSWorker"
+        private const val PREFS_NAME = "SMSWorkerPrefs"
+        private const val LAST_PROCESSED_TIME_KEY = "lastProcessedTime"
     }
 }
